@@ -5,6 +5,7 @@ export interface User {
   email: string;
   role: 'donor' | 'hospital' | 'admin';
   name: string;
+  profileId?: string;
 }
 
 export interface DonationRecord {

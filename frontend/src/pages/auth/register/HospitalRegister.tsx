@@ -1,11 +1,28 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Building2, Mail, Lock, Eye, EyeOff, Shield, MapPin, Phone, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { registerHospitalApi } from '../../../api/auth';
+import { useAuthStore } from '../../../store/authStore';
+
+const CITY_COORDS: Record<string, [number, number]> = {
+  'Colombo': [6.9271, 79.8612],
+  'Kandy': [7.2906, 80.6337],
+  'Galle': [6.0535, 80.2210],
+  'Jaffna': [9.6615, 80.0255],
+  'Negombo': [7.2081, 79.8358],
+  'Matara': [5.9549, 80.5550],
+  'Kurunegala': [7.4818, 80.3609],
+  'Ratnapura': [6.6828, 80.3992],
+  'Anuradhapura': [8.3114, 80.4037],
+  'Batticaloa': [7.7102, 81.6924],
+};
 
 export default function HospitalRegister() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const navigate = useNavigate();
+  const setAuth = useAuthStore(s => s.setAuth);
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
 
@@ -38,7 +55,42 @@ export default function HospitalRegister() {
           {step === 1 && <HospStep1 onNext={next} />}
           {step === 2 && <HospStep2 onNext={next} onBack={back} />}
           {step === 3 && <HospStep3 onNext={next} onBack={back} />}
-          {step === 4 && <HospStep4 formData={formData} onBack={back} />}
+          {step === 4 && (
+            <HospStep4
+              formData={formData}
+              onBack={back}
+              onSubmit={async (agreedTerms, agreedPrivacy) => {
+                const coords = CITY_COORDS[formData.city] || null;
+                const payload = {
+                  email: formData.email,
+                  password: formData.password,
+                  hospital_name: formData.hospitalName,
+                  facility_type: formData.facilityType || undefined,
+                  license_number: formData.license || undefined,
+                  contact_phone: formData.phone || undefined,
+                  address: formData.address || undefined,
+                  city: formData.city || undefined,
+                  latitude: coords ? coords[0] : undefined,
+                  longitude: coords ? coords[1] : undefined,
+                  agreed_terms: agreedTerms,
+                  agreed_privacy: agreedPrivacy,
+                };
+                const res = await registerHospitalApi(payload);
+                setAuth(
+                  {
+                    id: res.user.id,
+                    email: res.user.email,
+                    role: res.user.role,
+                    name: res.user.name,
+                    profileId: res.user.profile_id,
+                  },
+                  res.access_token
+                );
+                toast.success('Hospital account created! Welcome to LifeLink.');
+                navigate('/requests');
+              }}
+            />
+          )}
         </div>
         {step === 1 && (
           <p className="text-center text-sm text-gray-600 mt-4">Already have an account? <Link to="/signin" className="text-red-600 font-bold">Sign In</Link></p>
@@ -53,6 +105,14 @@ function HospStep1({ onNext }: { onNext: (data: Record<string, string>) => void 
   const [pw, setPw] = useState('');
   const [cpw, setCpw] = useState('');
   const [showPw, setShowPw] = useState(false);
+
+  const handleNext = () => {
+    if (!email || !pw) { toast.error('Email and password are required'); return; }
+    if (pw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (pw !== cpw) { toast.error('Passwords do not match'); return; }
+    onNext({ email, password: pw });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -84,7 +144,7 @@ function HospStep1({ onNext }: { onNext: (data: Record<string, string>) => void 
           <p className="text-xs text-blue-600">Your data is encrypted and protected.</p>
         </div>
       </div>
-      <button onClick={() => onNext({ email })} className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
+      <button onClick={handleNext} className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
     </div>
   );
 }
@@ -94,6 +154,12 @@ function HospStep2({ onNext, onBack }: { onNext: (data: Record<string, string>) 
   const [facilityType, setFacilityType] = useState('');
   const [license, setLicense] = useState('');
   const [phone, setPhone] = useState('');
+
+  const handleNext = () => {
+    if (!hospitalName) { toast.error('Hospital name is required'); return; }
+    onNext({ hospitalName, facilityType, license, phone });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -108,7 +174,7 @@ function HospStep2({ onNext, onBack }: { onNext: (data: Record<string, string>) 
           <label className="text-sm font-medium text-gray-700 block mb-1">Facility Type *</label>
           <select value={facilityType} onChange={e => setFacilityType(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
             <option value="">Select</option>
-            {['General Hospital','Surgical Hospital','Blood Bank','Medical Center','Clinic'].map(t => <option key={t}>{t}</option>)}
+            {['General Hospital', 'Surgical Hospital', 'Blood Bank', 'Medical Center', 'Clinic'].map(t => <option key={t}>{t}</option>)}
           </select>
         </div>
         <div>
@@ -125,7 +191,7 @@ function HospStep2({ onNext, onBack }: { onNext: (data: Record<string, string>) 
       </div>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
-        <button onClick={() => onNext({ hospitalName, facilityType, license })} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
+        <button onClick={handleNext} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
       </div>
     </div>
   );
@@ -145,17 +211,10 @@ function HospStep3({ onNext, onBack }: { onNext: (data: Record<string, string>) 
       </div>
       <div>
         <label className="text-sm font-medium text-gray-700 block mb-1">City/District *</label>
-        <input value={city} onChange={e => setCity(e.target.value)} placeholder="e.g., Colombo, Kandy, Galle" className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none" />
-      </div>
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <MapPin className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-medium text-gray-700">Map Location</span>
-        </div>
-        <p className="text-xs text-gray-500 mb-3">Interactive map for precise location would appear here</p>
-        <button type="button" className="border border-red-600 text-red-600 hover:bg-red-50 rounded-lg px-4 py-1.5 text-sm flex items-center gap-1">
-          <MapPin className="w-3 h-3" /> Set Location on Map
-        </button>
+        <select value={city} onChange={e => setCity(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+          <option value="">Select city</option>
+          {['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Matara', 'Kurunegala', 'Ratnapura', 'Anuradhapura', 'Batticaloa'].map(c => <option key={c}>{c}</option>)}
+        </select>
       </div>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
@@ -165,15 +224,42 @@ function HospStep3({ onNext, onBack }: { onNext: (data: Record<string, string>) 
   );
 }
 
-function HospStep4({ formData, onBack }: { formData: Record<string, string>; onBack: () => void }) {
+function HospStep4({
+  formData,
+  onBack,
+  onSubmit,
+}: {
+  formData: Record<string, string>;
+  onBack: () => void;
+  onSubmit: (agreedTerms: boolean, agreedPrivacy: boolean) => Promise<void>;
+}) {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = async () => {
+    setLoading(true);
+    try {
+      await onSubmit(agreedTerms, agreedPrivacy);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(msg || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
         <h3 className="font-semibold text-gray-900 mb-3">Registration Summary</h3>
         <div className="space-y-2 text-sm">
-          {[['Account Type', 'Hospital Staff'], ['Email', formData.email || '-'], ['Hospital', formData.hospitalName || '-']].map(([k, v]) => (
+          {[
+            ['Account Type', 'Hospital Staff'],
+            ['Email', formData.email || '-'],
+            ['Hospital', formData.hospitalName || '-'],
+            ['City', formData.city || '-'],
+          ].map(([k, v]) => (
             <div key={k} className="flex justify-between">
               <span className="text-gray-500">{k}:</span>
               <span className="font-medium text-gray-900">{v}</span>
@@ -193,12 +279,18 @@ function HospStep4({ formData, onBack }: { formData: Record<string, string>; onB
         <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
         <div>
           <p className="text-sm font-medium text-green-800">Data Protection & Privacy</p>
-          <p className="text-xs text-green-600">All your information is encrypted and stored securely. We comply with healthcare data protection regulations. Your facility information will be verified before activation.</p>
+          <p className="text-xs text-green-600">All your information is encrypted and stored securely. Your facility information will be verified before activation.</p>
         </div>
       </div>
       <div className="flex gap-3">
-        <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
-        <button onClick={() => toast.success('Account created successfully!')} disabled={!agreedTerms || !agreedPrivacy} className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg py-2.5 font-medium">Create Account</button>
+        <button onClick={onBack} disabled={loading} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
+        <button
+          onClick={handleCreate}
+          disabled={!agreedTerms || !agreedPrivacy || loading}
+          className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg py-2.5 font-medium"
+        >
+          {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
       </div>
     </div>
   );

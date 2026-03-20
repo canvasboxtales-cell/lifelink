@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Droplets, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { loginApi } from '../../api/auth';
+import { useAuthStore } from '../../store/authStore';
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -14,10 +16,35 @@ type FormData = z.infer<typeof schema>;
 
 export default function SignIn() {
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const setAuth = useAuthStore(s => s.setAuth);
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const onSubmit = (_data: FormData) => {
-    toast.success('Signed in successfully!');
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    try {
+      const res = await loginApi(data.email, data.password);
+      setAuth(
+        {
+          id: res.user.id,
+          email: res.user.email,
+          role: res.user.role,
+          name: res.user.name,
+          profileId: res.user.profile_id,
+        },
+        res.access_token
+      );
+      toast.success(`Welcome back, ${res.user.name}!`);
+      if (res.user.role === 'admin') navigate('/admin');
+      else if (res.user.role === 'donor') navigate('/donor-profile');
+      else navigate('/requests');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(msg || 'Sign in failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,10 +84,8 @@ export default function SignIn() {
             </label>
             <button type="button" className="text-red-600 text-sm hover:underline">Forgot password?</button>
           </div>
-          <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Sign In</button>
-          <div className="flex items-center gap-3"><div className="flex-1 h-px bg-gray-200" /><span className="text-sm text-gray-400">Or</span><div className="flex-1 h-px bg-gray-200" /></div>
-          <button type="button" className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg py-2.5 flex items-center justify-center gap-2 font-medium">
-            <span className="text-red-600 font-bold">G</span> Continue with Google
+          <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg py-2.5 font-medium">
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 mt-4">Don't have an account? <Link to="/register" className="text-red-600 font-bold hover:underline">Sign Up</Link></p>

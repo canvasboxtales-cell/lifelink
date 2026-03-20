@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.user import User, UserRole, DonorProfile, HospitalProfile
@@ -13,7 +14,11 @@ router = APIRouter()
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == data.email))
+    result = await db.execute(
+        select(User)
+        .where(User.email == data.email)
+        .options(selectinload(User.donor_profile), selectinload(User.hospital_profile))
+    )
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(data.password, user.password_hash):
@@ -22,16 +27,25 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Invalid email or password",
         )
 
+    profile_id = None
     name = user.email.split("@")[0]
     if user.donor_profile:
         name = user.donor_profile.name
+        profile_id = user.donor_profile.id
     elif user.hospital_profile:
         name = user.hospital_profile.hospital_name
+        profile_id = user.hospital_profile.id
 
     token = create_access_token({"sub": user.id})
     return TokenResponse(
         access_token=token,
-        user={"id": user.id, "email": user.email, "role": user.role.value, "name": name},
+        user={
+            "id": user.id,
+            "email": user.email,
+            "role": user.role.value,
+            "name": name,
+            "profile_id": profile_id,
+        },
     )
 
 
@@ -83,7 +97,13 @@ async def register_donor(data: RegisterDonor, db: AsyncSession = Depends(get_db)
     token = create_access_token({"sub": user.id})
     return TokenResponse(
         access_token=token,
-        user={"id": user.id, "email": user.email, "role": user.role.value, "name": data.name},
+        user={
+            "id": user.id,
+            "email": user.email,
+            "role": user.role.value,
+            "name": data.name,
+            "profile_id": profile.id,
+        },
     )
 
 
@@ -118,5 +138,11 @@ async def register_hospital(data: RegisterHospital, db: AsyncSession = Depends(g
     token = create_access_token({"sub": user.id})
     return TokenResponse(
         access_token=token,
-        user={"id": user.id, "email": user.email, "role": user.role.value, "name": data.hospital_name},
+        user={
+            "id": user.id,
+            "email": user.email,
+            "role": user.role.value,
+            "name": data.hospital_name,
+            "profile_id": profile.id,
+        },
     )

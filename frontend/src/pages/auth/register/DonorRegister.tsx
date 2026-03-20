@@ -1,13 +1,30 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Droplets, Mail, Lock, Eye, EyeOff, Shield, User, Phone, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { registerDonorApi } from '../../../api/auth';
+import { useAuthStore } from '../../../store/authStore';
+
+const CITY_COORDS: Record<string, [number, number]> = {
+  'Colombo': [6.9271, 79.8612],
+  'Kandy': [7.2906, 80.6337],
+  'Galle': [6.0535, 80.2210],
+  'Jaffna': [9.6615, 80.0255],
+  'Negombo': [7.2081, 79.8358],
+  'Matara': [5.9549, 80.5550],
+  'Kurunegala': [7.4818, 80.3609],
+  'Ratnapura': [6.6828, 80.3992],
+  'Anuradhapura': [8.3114, 80.4037],
+  'Batticaloa': [7.7102, 81.6924],
+};
 
 export default function DonorRegister() {
   const [step, setStep] = useState(1);
   const [showPw, setShowPw] = useState(false);
   const [showCPw, setShowCPw] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const navigate = useNavigate();
+  const setAuth = useAuthStore(s => s.setAuth);
 
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
@@ -45,7 +62,45 @@ export default function DonorRegister() {
           )}
           {step === 2 && <Step2 onNext={next} onBack={back} />}
           {step === 3 && <Step3 onNext={next} onBack={back} />}
-          {step === 4 && <Step4 formData={formData} onBack={back} />}
+          {step === 4 && (
+            <Step4
+              formData={formData}
+              onBack={back}
+              onSubmit={async (agreedTerms, agreedPrivacy) => {
+                const coords = CITY_COORDS[formData.city] || null;
+                const payload = {
+                  email: formData.email,
+                  password: formData.password,
+                  name: formData.name,
+                  phone: formData.phone || undefined,
+                  national_id: formData.nid || undefined,
+                  date_of_birth: formData.dob || undefined,
+                  blood_type: formData.bloodType,
+                  weight_kg: formData.weight ? Number(formData.weight) : undefined,
+                  last_donation_date: formData.lastDonation || undefined,
+                  medical_notes: formData.medNotes || undefined,
+                  city: formData.city || undefined,
+                  latitude: coords ? coords[0] : undefined,
+                  longitude: coords ? coords[1] : undefined,
+                  agreed_terms: agreedTerms,
+                  agreed_privacy: agreedPrivacy,
+                };
+                const res = await registerDonorApi(payload);
+                setAuth(
+                  {
+                    id: res.user.id,
+                    email: res.user.email,
+                    role: res.user.role,
+                    name: res.user.name,
+                    profileId: res.user.profile_id,
+                  },
+                  res.access_token
+                );
+                toast.success('Account created! Welcome to LifeLink.');
+                navigate('/donor-profile');
+              }}
+            />
+          )}
         </div>
         {step === 1 && (
           <p className="text-center text-sm text-gray-600 mt-4">Already have an account? <Link to="/signin" className="text-red-600 font-bold">Sign In</Link></p>
@@ -65,6 +120,14 @@ function Step1({ showPw, setShowPw, showCPw, setShowCPw, onNext }: {
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [cpw, setCpw] = useState('');
+
+  const handleNext = () => {
+    if (!email || !pw) { toast.error('Email and password are required'); return; }
+    if (pw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (pw !== cpw) { toast.error('Passwords do not match'); return; }
+    onNext({ email, password: pw });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -97,7 +160,7 @@ function Step1({ showPw, setShowPw, showCPw, setShowCPw, onNext }: {
           <p className="text-xs text-blue-600">Your data is encrypted and protected. We never share your information without permission.</p>
         </div>
       </div>
-      <button onClick={() => onNext({ email, password: pw })} className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
+      <button onClick={handleNext} className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
     </div>
   );
 }
@@ -107,6 +170,12 @@ function Step2({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
   const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [nid, setNid] = useState('');
+
+  const handleNext = () => {
+    if (!name) { toast.error('Full name is required'); return; }
+    onNext({ name, dob, phone, nid });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -136,7 +205,7 @@ function Step2({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
       </div>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
-        <button onClick={() => onNext({ name, phone })} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
+        <button onClick={handleNext} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
       </div>
     </div>
   );
@@ -147,6 +216,13 @@ function Step3({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
   const [weight, setWeight] = useState('50');
   const [lastDonation, setLastDonation] = useState('');
   const [medNotes, setMedNotes] = useState('');
+  const [city, setCity] = useState('');
+
+  const handleNext = () => {
+    if (!bloodType) { toast.error('Blood type is required'); return; }
+    onNext({ bloodType, weight, lastDonation, medNotes, city });
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -154,7 +230,7 @@ function Step3({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
           <label className="text-sm font-medium text-gray-700 block mb-1">Blood Type *</label>
           <select value={bloodType} onChange={e => setBloodType(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
             <option value="">Select</option>
-            {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => <option key={t}>{t}</option>)}
+            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t}>{t}</option>)}
           </select>
         </div>
         <div>
@@ -162,6 +238,13 @@ function Step3({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
           <input type="number" value={weight} onChange={e => setWeight(e.target.value)} min="50" className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none" />
           <p className="text-xs text-gray-400 mt-1">Minimum 50kg to donate</p>
         </div>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-gray-700 block mb-1">City / District</label>
+        <select value={city} onChange={e => setCity(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+          <option value="">Select your city</option>
+          {['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Matara', 'Kurunegala', 'Ratnapura', 'Anuradhapura', 'Batticaloa'].map(c => <option key={c}>{c}</option>)}
+        </select>
       </div>
       <div>
         <label className="text-sm font-medium text-gray-700 block mb-1">Last Donation Date (Optional)</label>
@@ -178,21 +261,49 @@ function Step3({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
       </div>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
-        <button onClick={() => onNext({ bloodType, weight })} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
+        <button onClick={handleNext} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 font-medium">Next Step</button>
       </div>
     </div>
   );
 }
 
-function Step4({ formData, onBack }: { formData: Record<string, string>; onBack: () => void }) {
+function Step4({
+  formData,
+  onBack,
+  onSubmit,
+}: {
+  formData: Record<string, string>;
+  onBack: () => void;
+  onSubmit: (agreedTerms: boolean, agreedPrivacy: boolean) => Promise<void>;
+}) {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = async () => {
+    setLoading(true);
+    try {
+      await onSubmit(agreedTerms, agreedPrivacy);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(msg || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
         <h3 className="font-semibold text-gray-900 mb-3">Registration Summary</h3>
         <div className="space-y-2 text-sm">
-          {[['Account Type', 'Blood Donor'], ['Email', formData.email || '-'], ['Name', formData.name || '-'], ['Blood Type', formData.bloodType || '-']].map(([k, v]) => (
+          {[
+            ['Account Type', 'Blood Donor'],
+            ['Email', formData.email || '-'],
+            ['Name', formData.name || '-'],
+            ['Blood Type', formData.bloodType || '-'],
+            ['City', formData.city || '-'],
+          ].map(([k, v]) => (
             <div key={k} className="flex justify-between">
               <span className="text-gray-500">{k}:</span>
               <span className="font-medium text-gray-900">{v}</span>
@@ -212,12 +323,18 @@ function Step4({ formData, onBack }: { formData: Record<string, string>; onBack:
         <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
         <div>
           <p className="text-sm font-medium text-green-800">Data Protection & Privacy</p>
-          <p className="text-xs text-green-600">All your information is encrypted and stored securely. We comply with healthcare data protection regulations. Your contact information will only be shared with verified healthcare facilities when you approve a match.</p>
+          <p className="text-xs text-green-600">All your information is encrypted and stored securely. We comply with healthcare data protection regulations.</p>
         </div>
       </div>
       <div className="flex gap-3">
-        <button onClick={onBack} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
-        <button onClick={() => toast.success('Account created successfully!')} disabled={!agreedTerms || !agreedPrivacy} className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg py-2.5 font-medium">Create Account</button>
+        <button onClick={onBack} disabled={loading} className="flex-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium">Back</button>
+        <button
+          onClick={handleCreate}
+          disabled={!agreedTerms || !agreedPrivacy || loading}
+          className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg py-2.5 font-medium"
+        >
+          {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
       </div>
     </div>
   );

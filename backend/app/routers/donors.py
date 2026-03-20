@@ -2,6 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.user import DonorProfile, AvailabilityStatus, User
@@ -45,10 +46,20 @@ async def search(
 
 @router.get("/{donor_id}/profile")
 async def get_profile(donor_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DonorProfile).where(DonorProfile.id == donor_id))
+    result = await db.execute(
+        select(DonorProfile)
+        .where(DonorProfile.id == donor_id)
+        .options(selectinload(DonorProfile.donation_history))
+    )
     donor = result.scalar_one_or_none()
     if not donor:
         raise HTTPException(status_code=404, detail="Donor not found")
+
+    from datetime import datetime, timedelta
+    next_eligible = None
+    if donor.last_donation:
+        next_eligible = (donor.last_donation + timedelta(days=90)).strftime("%d/%m/%Y")
+
     return {
         "id": donor.id,
         "name": donor.name,
@@ -58,8 +69,50 @@ async def get_profile(donor_id: str, db: AsyncSession = Depends(get_db)):
         "total_donations": donor.total_donations,
         "response_rate": donor.response_rate,
         "availability": donor.availability.value if donor.availability else "unavailable",
-        "last_donation": donor.last_donation,
+        "last_donation": donor.last_donation.strftime("%d/%m/%Y") if donor.last_donation else None,
+        "next_eligible_date": next_eligible,
+        "lives_impacted": donor.total_donations * 3,
+        "medical_notes": donor.medical_notes,
+        "donation_history": [
+            {
+                "id": h.id,
+                "hospital_name": h.hospital_name,
+                "patient_type": h.patient_type,
+                "donated_at": h.donated_at.strftime("%d/%m/%Y"),
+            }
+            for h in donor.donation_history
+        ],
     }
+
+
+@router.put("/{donor_id}/profile")
+async def update_profile(
+    donor_id: str,
+    data: DonorUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(DonorProfile).where(DonorProfile.id == donor_id))
+    donor = result.scalar_one_or_none()
+    if not donor:
+        raise HTTPException(status_code=404, detail="Donor not found")
+
+    if data.name is not None:
+        donor.name = data.name
+    if data.city is not None:
+        donor.city = data.city
+    if data.phone is not None:
+        donor.phone = data.phone
+    if data.medical_notes is not None:
+        donor.medical_notes = data.medical_notes
+    if data.availability is not None:
+        try:
+            donor.availability = AvailabilityStatus(data.availability)
+        except ValueError:
+            pass
+
+    await db.commit()
+    return {"id": donor.id, "status": "updated"}
 
 
 @router.put("/{donor_id}/availability")
