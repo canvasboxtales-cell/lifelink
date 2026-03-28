@@ -12,6 +12,8 @@ import SignIn from './pages/auth/SignIn';
 import SignUpChoice from './pages/auth/SignUpChoice';
 import DonorRegister from './pages/auth/register/DonorRegister';
 import HospitalRegister from './pages/auth/register/HospitalRegister';
+import TermsOfService from './pages/legal/TermsOfService';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -60,6 +62,8 @@ export default function App() {
                 <Route path="/requests" element={
                   <RequireAuth><RequestManagement /></RequireAuth>
                 } />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
               </Routes>
             </div>
           } />

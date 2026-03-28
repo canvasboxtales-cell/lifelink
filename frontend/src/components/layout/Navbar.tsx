@@ -59,7 +59,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/register" className="border border-red-600 text-red-600 hover:bg-red-50 rounded-lg px-4 py-1.5 text-sm font-medium">
+              <Link to="/register/donor" className="border border-red-600 text-red-600 hover:bg-red-50 rounded-lg px-4 py-1.5 text-sm font-medium">
                 Register as Donor
               </Link>
               <Link to="/signin" className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-1.5 text-sm font-medium">

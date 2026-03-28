@@ -1,6 +1,6 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
-from app.config import settings
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker  # type: ignore
+from sqlalchemy.orm import DeclarativeBase  # type: ignore
+from app.config import settings  # type: ignore
 
 if settings.USE_SQLITE:
     DATABASE_URL = "sqlite+aiosqlite:///./lifelink.db"
@@ -9,10 +9,19 @@ else:
     DATABASE_URL = settings.DATABASE_URL
     connect_args = {"ssl": "require"}
 
+kwargs = {
+    "echo": False,
+    "connect_args": connect_args,
+}  # type: ignore
+
+if not settings.USE_SQLITE:
+    kwargs["pool_pre_ping"] = True  # type: ignore
+    kwargs["pool_recycle"] = 300  # type: ignore
+    kwargs["pool_size"] = 10  # type: ignore
+
 engine = create_async_engine(
     DATABASE_URL,
-    echo=False,
-    connect_args=connect_args,
+    **kwargs
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -34,5 +43,5 @@ async def get_db():
 
 async def create_tables():
     async with engine.begin() as conn:
-        from app.models import user, request, notification
+        from app.models import user, request, notification  # type: ignore
         await conn.run_sync(Base.metadata.create_all)

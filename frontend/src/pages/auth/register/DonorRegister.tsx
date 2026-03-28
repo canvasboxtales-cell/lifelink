@@ -5,17 +5,39 @@ import toast from 'react-hot-toast';
 import { registerDonorApi } from '../../../api/auth';
 import { useAuthStore } from '../../../store/authStore';
 
+const DISTRICTS = [
+  'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 
+  'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 
+  'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 
+  'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+];
+
 const CITY_COORDS: Record<string, [number, number]> = {
-  'Colombo': [6.9271, 79.8612],
-  'Kandy': [7.2906, 80.6337],
-  'Galle': [6.0535, 80.2210],
-  'Jaffna': [9.6615, 80.0255],
-  'Negombo': [7.2081, 79.8358],
-  'Matara': [5.9549, 80.5550],
-  'Kurunegala': [7.4818, 80.3609],
-  'Ratnapura': [6.6828, 80.3992],
+  'Ampara': [7.2840, 81.6724],
   'Anuradhapura': [8.3114, 80.4037],
+  'Badulla': [6.9895, 80.8524],
   'Batticaloa': [7.7102, 81.6924],
+  'Colombo': [6.9271, 79.8612],
+  'Galle': [6.0535, 80.2210],
+  'Gampaha': [7.0873, 79.9984],
+  'Hambantota': [6.1246, 81.1185],
+  'Jaffna': [9.6615, 80.0255],
+  'Kalutara': [6.5854, 79.9607],
+  'Kandy': [7.2906, 80.6337],
+  'Kegalle': [7.2513, 80.3464],
+  'Kilinochchi': [9.3803, 80.3770],
+  'Kurunegala': [7.4818, 80.3609],
+  'Mannar': [8.9810, 79.9044],
+  'Matale': [7.4675, 80.6234],
+  'Matara': [5.9549, 80.5550],
+  'Monaragala': [6.8728, 81.3471],
+  'Mullaitivu': [9.2671, 80.8142],
+  'Nuwara Eliya': [6.9497, 80.7828],
+  'Polonnaruwa': [7.9403, 81.0188],
+  'Puttalam': [8.0362, 79.8283],
+  'Ratnapura': [6.6828, 80.3992],
+  'Trincomalee': [8.5874, 81.2152],
+  'Vavuniya': [8.7514, 80.4971]
 };
 
 export default function DonorRegister() {
@@ -243,7 +265,7 @@ function Step3({ onNext, onBack }: { onNext: (data: Record<string, string>) => v
         <label className="text-sm font-medium text-gray-700 block mb-1">City / District</label>
         <select value={city} onChange={e => setCity(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
           <option value="">Select your city</option>
-          {['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Matara', 'Kurunegala', 'Ratnapura', 'Anuradhapura', 'Batticaloa'].map(c => <option key={c}>{c}</option>)}
+          {DISTRICTS.map(c => <option key={c}>{c}</option>)}
         </select>
       </div>
       <div>
@@ -313,11 +335,11 @@ function Step4({
       </div>
       <label className="flex items-start gap-2 cursor-pointer">
         <input type="checkbox" checked={agreedTerms} onChange={e => setAgreedTerms(e.target.checked)} className="mt-0.5 accent-red-600" />
-        <span className="text-sm text-gray-600">I agree to the <span className="text-blue-600">Terms of Service</span> and understand my responsibilities as a blood donor.</span>
+        <span className="text-sm text-gray-600">I agree to the <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms of Service</Link> and understand my responsibilities as a blood donor.</span>
       </label>
       <label className="flex items-start gap-2 cursor-pointer">
         <input type="checkbox" checked={agreedPrivacy} onChange={e => setAgreedPrivacy(e.target.checked)} className="mt-0.5 accent-red-600" />
-        <span className="text-sm text-gray-600">I have read and agree to the <span className="text-blue-600">Privacy Policy</span> and consent to data processing.</span>
+        <span className="text-sm text-gray-600">I have read and agree to the <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Privacy Policy</Link> and consent to data processing.</span>
       </label>
       <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex gap-2">
         <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />

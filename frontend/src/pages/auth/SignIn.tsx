@@ -97,7 +97,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-      <p className="text-xs text-gray-500 mt-6">By signing in, you agree to our <span className="text-blue-600">Terms of Service</span> • <span className="text-blue-600">Privacy Policy</span></p>
+      <p className="text-xs text-gray-500 mt-6">By signing in, you agree to our <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms of Service</Link> &bull; <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Privacy Policy</Link></p>
     </div>
   );
 }

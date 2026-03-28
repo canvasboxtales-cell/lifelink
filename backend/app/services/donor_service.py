@@ -1,10 +1,10 @@
 from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from geopy.distance import geodesic
+from sqlalchemy.ext.asyncio import AsyncSession  # type: ignore
+from sqlalchemy import select  # type: ignore
+from geopy.distance import geodesic  # type: ignore
 
-from app.models.user import DonorProfile, AvailabilityStatus
-from app.services.ml_service import predict_donation_probability, compute_match_score, generate_ai_recommendation
+from app.models.user import DonorProfile, AvailabilityStatus  # type: ignore
+from app.services.ml_service import predict_donation_probability, compute_match_score, generate_ai_recommendation  # type: ignore
 
 COMPATIBLE_DONORS = {
     "A+":  ["A+", "A-", "O+", "O-"],
@@ -43,11 +43,9 @@ async def search_donors(
     all_donors = result.scalars().all()
 
     matched = []
-    compatible_types = COMPATIBLE_DONORS.get(blood_type, [blood_type]) if blood_type else None
-
     for donor in all_donors:
-        # Filter by blood type compatibility
-        if compatible_types and donor.blood_type not in compatible_types:
+        # Filter by exact blood type for UI search
+        if blood_type and donor.blood_type != blood_type:
             continue
 
         # Calculate distance
@@ -84,11 +82,11 @@ async def search_donors(
 
         matched.append({
             "donor": donor,
-            "distance_km": round(distance_km, 1),
+            "distance_km": round(float(distance_km), 1),  # type: ignore
             "match_score": match_score,
             "ai_recommendation": ai_rec,
         })
 
     # Sort by match score descending
     matched.sort(key=lambda x: x["match_score"], reverse=True)
-    return matched[:20]
+    return matched[:100]  # type: ignore

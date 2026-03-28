@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas.ml import PredictRequest, PredictResponse, MatchScoreRequest, MatchScoreResponse
-from app.services.ml_service import predict_donation_probability
+from app.services.ml_service import predict_donation_probability, get_prediction_threshold
 from app.services.matching_service import get_match_score_for_donor
 
 router = APIRouter()
@@ -12,8 +12,9 @@ router = APIRouter()
 @router.post("/predict", response_model=PredictResponse)
 async def predict(data: PredictRequest):
     prob = predict_donation_probability(data.recency, data.frequency, data.monetary, data.time)
-    will_donate = prob >= 0.5
-    confidence = "high" if prob >= 0.8 or prob <= 0.2 else "medium" if prob >= 0.6 or prob <= 0.4 else "low"
+    thr = get_prediction_threshold()
+    will_donate = prob >= thr
+    confidence = "high" if prob >= 0.70 else "medium" if prob >= 0.45 else "low"
     return PredictResponse(
         donation_probability=prob,
         will_donate=will_donate,

@@ -1,8 +1,24 @@
 import { Link } from 'react-router-dom';
 import { Flame, MapPin, Users, Heart, TrendingUp, Droplets, Bell } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
 import StatCard from '../components/ui/StatCard';
 
 export default function Home() {
+  const { data: stats } = useQuery({
+    queryKey: ['public-stats'],
+    queryFn: () => api.get('/api/public/stats').then(res => res.data)
+  });
+
+  const activeStats = stats || {
+    active_donors: 0,
+    lives_saved: 0,
+    success_rate: 0,
+    active_requests: 0,
+    urgent_count: 0,
+    urgent_blood_types: [],
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Hero */}
@@ -18,7 +34,7 @@ export default function Home() {
             Connecting donors and recipients across Sri Lanka using intelligent matching algorithms. Every donation counts, every match matters.
           </p>
           <div className="flex gap-4 mb-8">
-            <Link to="/register" className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-6 py-3 font-medium flex items-center gap-2">
+            <Link to="/register/donor" className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-6 py-3 font-medium flex items-center gap-2">
               <Droplets className="w-4 h-4" /> Become a Donor
             </Link>
             <Link to="/find-blood" className="border border-red-600 text-red-600 hover:bg-red-50 rounded-lg px-6 py-3 font-medium flex items-center gap-2">
@@ -34,38 +50,39 @@ export default function Home() {
               ))}
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">2,500+ Active Donors</p>
+              <p className="font-semibold text-gray-900 text-sm">{activeStats.active_donors}+ Active Donors</p>
               <p className="text-gray-500 text-xs">Ready to help 24/7</p>
             </div>
           </div>
         </div>
-        <div className="relative">
-          <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
+        <div className="relative flex flex-col items-center justify-center p-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-red-100 to-white rounded-3xl transform rotate-2 scale-105 shadow-inner" />
+          <div className="relative bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl border border-red-50 p-8 w-full text-center overflow-hidden">
+            {/* Transparent Background Logos */}
+            <Droplets className="w-64 h-64 text-red-500 opacity-10 absolute -top-16 -right-12 transform rotate-12" />
+            <Heart className="w-64 h-64 text-red-500 opacity-10 absolute -bottom-16 -left-12 transform -rotate-12" />
+            
+            <div className="relative z-10 flex flex-col items-center justify-center">
+              <div className="bg-red-600 p-4 rounded-full mb-4 shadow-lg shadow-red-200">
+                <Heart className="w-8 h-8 text-white fill-current" />
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Perfect Match Found!</p>
-                <p className="text-sm text-gray-500">O+ Blood • 2.3km away</p>
-              </div>
-            </div>
-            <div className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Compatibility</span>
-                <span className="text-green-600 font-semibold">98% Match</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '98%' }} />
-              </div>
-            </div>
-            <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-orange-500" />
-              <div>
-                <p className="text-xs font-semibold text-gray-800">3 Urgent Requests</p>
-                <p className="text-xs text-gray-500">In your area</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">LifeLink Intelligent Network</h2>
+              <p className="text-gray-600 leading-relaxed text-sm max-w-sm mx-auto">
+                Our advanced algorithm evaluates geolocation, historical response velocity, and critical blood compatibility to ensure patients receive emergency transfusions faster than ever before.
+              </p>
+              
+              <div className="mt-8 w-full bg-white/80 border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                 <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-800">System Activity</p>
+                    <p className="text-xs text-gray-500">ML Matching Engine</p>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <span className="text-sm font-semibold text-green-600">Online</span>
+                 </div>
               </div>
             </div>
           </div>
@@ -74,10 +91,10 @@ export default function Home() {
 
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 pb-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Active Donors" value="2,547" change="↑ 12% this month" icon={<Users className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-50" />
-        <StatCard title="Lives Saved" value="1,823" change="↑ 143 this week" icon={<Heart className="w-5 h-5 text-red-500" />} iconBg="bg-red-50" />
-        <StatCard title="Success Rate" value="96.5%" change="↑ 2.3% increase" icon={<TrendingUp className="w-5 h-5 text-green-600" />} iconBg="bg-green-50" />
-        <StatCard title="Active Requests" value="47" icon={<Droplets className="w-5 h-5 text-orange-500" />} iconBg="bg-orange-50" />
+        <StatCard title="Active Donors" value={activeStats.active_donors.toString()} change="Real-time data" icon={<Users className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-50" />
+        <StatCard title="Lives Saved" value={activeStats.lives_saved.toString()} change="Real-time data" icon={<Heart className="w-5 h-5 text-red-500" />} iconBg="bg-red-50" />
+        <StatCard title="Success Rate" value={`${activeStats.success_rate}%`} change="Real-time data" icon={<TrendingUp className="w-5 h-5 text-green-600" />} iconBg="bg-green-50" />
+        <StatCard title="Active Requests" value={activeStats.active_requests.toString()} icon={<Droplets className="w-5 h-5 text-orange-500" />} iconBg="bg-orange-50" />
       </section>
 
       {/* How It Works */}
@@ -111,15 +128,19 @@ export default function Home() {
               <span className="text-red-300 text-xs font-semibold tracking-widest uppercase">Urgent Need</span>
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Blood Needed Now</h2>
-            <p className="text-red-200 mb-4">5 critical patients waiting for O-, AB+, and B+ blood types in Colombo area</p>
+            <p className="text-red-200 mb-4">
+              {activeStats.urgent_count > 0 
+                ? `${activeStats.urgent_count} critical patients waiting for ${activeStats.urgent_blood_types.join(', ')} blood types.`
+                : 'All current hospital requests are stable. Sign up to secure future safety.'}
+            </p>
             <div className="flex gap-2">
-              {['O-', 'AB+', 'B+'].map(t => (
+              {activeStats.urgent_blood_types.map((t: string) => (
                 <span key={t} className="bg-red-700 text-white px-3 py-1 rounded-full text-sm font-bold">{t}</span>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-3 min-w-48">
-            <Link to="/register" className="bg-white text-red-700 font-semibold px-6 py-2 rounded-lg text-center hover:bg-red-50">
+            <Link to="/register/donor" className="bg-white text-red-700 font-semibold px-6 py-2 rounded-lg text-center hover:bg-red-50">
               I Can Donate
             </Link>
           </div>

@@ -92,7 +92,12 @@ export default function DonorProfile() {
                       <label className="text-sm font-medium text-gray-700 block mb-1">City</label>
                       <select value={editData.city} onChange={e => setEditData(d => ({ ...d, city: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none">
                         <option value="">Select city</option>
-                        {['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Matara', 'Kurunegala', 'Ratnapura', 'Anuradhapura', 'Batticaloa'].map(c => <option key={c}>{c}</option>)}
+                        {[
+                          'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 
+                          'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 
+                          'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 
+                          'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+                        ].map(c => <option key={c}>{c}</option>)}
                       </select>
                     </div>
                     <div>

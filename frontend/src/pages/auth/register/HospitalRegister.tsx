@@ -5,17 +5,39 @@ import toast from 'react-hot-toast';
 import { registerHospitalApi } from '../../../api/auth';
 import { useAuthStore } from '../../../store/authStore';
 
+const DISTRICTS = [
+  'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 
+  'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 
+  'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 
+  'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+];
+
 const CITY_COORDS: Record<string, [number, number]> = {
-  'Colombo': [6.9271, 79.8612],
-  'Kandy': [7.2906, 80.6337],
-  'Galle': [6.0535, 80.2210],
-  'Jaffna': [9.6615, 80.0255],
-  'Negombo': [7.2081, 79.8358],
-  'Matara': [5.9549, 80.5550],
-  'Kurunegala': [7.4818, 80.3609],
-  'Ratnapura': [6.6828, 80.3992],
+  'Ampara': [7.2840, 81.6724],
   'Anuradhapura': [8.3114, 80.4037],
+  'Badulla': [6.9895, 80.8524],
   'Batticaloa': [7.7102, 81.6924],
+  'Colombo': [6.9271, 79.8612],
+  'Galle': [6.0535, 80.2210],
+  'Gampaha': [7.0873, 79.9984],
+  'Hambantota': [6.1246, 81.1185],
+  'Jaffna': [9.6615, 80.0255],
+  'Kalutara': [6.5854, 79.9607],
+  'Kandy': [7.2906, 80.6337],
+  'Kegalle': [7.2513, 80.3464],
+  'Kilinochchi': [9.3803, 80.3770],
+  'Kurunegala': [7.4818, 80.3609],
+  'Mannar': [8.9810, 79.9044],
+  'Matale': [7.4675, 80.6234],
+  'Matara': [5.9549, 80.5550],
+  'Monaragala': [6.8728, 81.3471],
+  'Mullaitivu': [9.2671, 80.8142],
+  'Nuwara Eliya': [6.9497, 80.7828],
+  'Polonnaruwa': [7.9403, 81.0188],
+  'Puttalam': [8.0362, 79.8283],
+  'Ratnapura': [6.6828, 80.3992],
+  'Trincomalee': [8.5874, 81.2152],
+  'Vavuniya': [8.7514, 80.4971]
 };
 
 export default function HospitalRegister() {
@@ -166,7 +188,113 @@ function HospStep2({ onNext, onBack }: { onNext: (data: Record<string, string>) 
         <label className="text-sm font-medium text-gray-700 block mb-1">Hospital/Facility Name *</label>
         <div className="relative">
           <Building2 className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
-          <input value={hospitalName} onChange={e => setHospitalName(e.target.value)} placeholder="Enter hospital name" className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none" />
+          <input value={hospitalName} list="nbts-hospitals" onChange={e => setHospitalName(e.target.value)} placeholder="Type or select official blood bank" className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none" />
+          <datalist id="nbts-hospitals">
+            <option value="National Blood Center" />
+            <option value="Blood Bank - Anuradhapura Teaching Hospital" />
+            <option value="Blood Bank - Colombo North Teaching Hospital (Ragama)" />
+            <option value="Blood Bank - Colombo South Teaching Hospital (Kalubowila)" />
+            <option value="Blood Bank - Galle National Hospital (Karapitiya)" />
+            <option value="Blood Bank - Jaffna Teaching Hospital" />
+            <option value="Blood Bank - Kandy National Hospital (Teaching)" />
+            <option value="Blood Bank - Peradeniya Teaching Hospital" />
+            <option value="Blood Bank - Ratnapura Teaching Hospital" />
+            <option value="Blood Bank - Teaching Hospital Badulla" />
+            <option value="Blood Bank - Teaching Hospital Batticaloa" />
+            <option value="Blood Bank - Apeksha Hospital (National Cancer Institute)" />
+            <option value="Blood Bank - Teaching Hospital Mahamodara" />
+            <option value="Blood Bank - DGH Nuwara Eliya" />
+            <option value="Blood Bank - DGH Nawalapitiya" />
+            <option value="Blood Bank - DGH Kegalle" />
+            <option value="Blood Bank - DGH Embilipitiya" />
+            <option value="Blood Bank - DGH Kalutara" />
+            <option value="Blood Bank - DGH Gampaha" />
+            <option value="Blood Bank - DGH Negombo" />
+            <option value="Blood Bank - DGH Matale" />
+            <option value="Blood Bank - DGH Hambantota" />
+            <option value="Blood Bank - DGH Monaragala" />
+            <option value="Blood Bank - DGH Mannar" />
+            <option value="Blood Bank - DGH Vavuniya" />
+            <option value="Blood Bank - DGH Trincomalee" />
+            <option value="Blood Bank - DGH Chilaw" />
+            <option value="Blood Bank - DGH Polonnaruwa" />
+            <option value="Blood Bank - DGH Matara" />
+            <option value="Blood Bank - DGH Kilinochchi" />
+            <option value="Blood Bank - DGH Ampara" />
+            <option value="Blood Bank - DGH Mullaitivu" />
+            <option value="Blood Bank - DGH Avissawella" />
+            <option value="Blood Bank - Base Hospital Homagama" />
+            <option value="Blood Bank - Base Hospital Dikoya" />
+            <option value="Blood Bank - Base Hospital Gampola" />
+            <option value="Blood Bank - Base Hospital Panadura" />
+            <option value="Blood Bank - Kethumathi Maternity Hospital" />
+            <option value="Blood Bank - Base Hospital Wathupitiwala" />
+            <option value="Blood Bank - Base Hospital Dambulla" />
+            <option value="Blood Bank - Base Hospital Tangalle" />
+            <option value="Blood Bank - Base Hospital Balapitiya" />
+            <option value="Blood Bank - Base Hospital Elpitiya" />
+            <option value="Blood Bank - Base Hospital Kuliyapitiya" />
+            <option value="Blood Bank - Base Hospital Diyatalawa" />
+            <option value="Blood Bank - Base Hospital Mahiyanganaya" />
+            <option value="Blood Bank - Base Hospital Valachchenai" />
+            <option value="Blood Bank - Base Hospital Kaluvanchikudy" />
+            <option value="Blood Bank - Base Hospital Kantale" />
+            <option value="Blood Bank - Base Hospital Puttalam" />
+            <option value="Blood Bank - Base Hospital Medirigiriya" />
+            <option value="Blood Bank - Base Hospital Akkaraipattu" />
+            <option value="Blood Bank - Base Hospital Kalmunai South AMH" />
+            <option value="Blood Bank - Base Hospital Kalmunai North" />
+            <option value="Blood Bank - Base Hospital Point Pedro" />
+            <option value="Blood Bank - Base Hospital Tellipalai" />
+            <option value="Blood Bank - Base Hospital Thambuththegama" />
+            <option value="Blood Bank - National Institute of Infectious Diseases (IDH)" />
+            <option value="Blood Bank - Base Hospital Mulleriyawa" />
+            <option value="Blood Bank - Base Hospital Rikillagaskada" />
+            <option value="Blood Bank - Base Hospital Teldeniya" />
+            <option value="Blood Bank - Base Hospital Karawanella" />
+            <option value="Blood Bank - Base Hospital Warakapola" />
+            <option value="Blood Bank - Base Hospital Mawanella" />
+            <option value="Blood Bank - Base Hospital Kahawatta" />
+            <option value="Blood Bank - Base Hospital Balangoda" />
+            <option value="Blood Bank - Base Hospital Meerigama" />
+            <option value="Blood Bank - Base Hospital Minuwangoda" />
+            <option value="Blood Bank - Base Hospital Tissamaharama" />
+            <option value="Blood Bank - Base Hospital Walasmulla" />
+            <option value="Blood Bank - Base Hospital Udugama" />
+            <option value="Blood Bank - Base Hospital Bibile" />
+            <option value="Blood Bank - Base Hospital Wellawaya" />
+            <option value="Blood Bank - Base Hospital Nikaweratiya" />
+            <option value="Blood Bank - Base Hospital Dambadeniya" />
+            <option value="Blood Bank - Base Hospital Galgamuwa" />
+            <option value="Blood Bank - Base Hospital Welimada" />
+            <option value="Blood Bank - Base Hospital Chettikulam" />
+            <option value="Blood Bank - Base Hospital Kattankudy" />
+            <option value="Blood Bank - Base Hospital Kinniya" />
+            <option value="Blood Bank - Base Hospital Muttur" />
+            <option value="Blood Bank - Base Hospital Marawila" />
+            <option value="Blood Bank - Base Hospital Deniyaya" />
+            <option value="Blood Bank - Base Hospital Kamburupitiya" />
+            <option value="Blood Bank - Base Hospital Potuvil" />
+            <option value="Blood Bank - Base Hospital Sammanturai" />
+            <option value="Blood Bank - Base Hospital Chavakachcheri" />
+            <option value="Blood Bank - Base Hospital Kayts" />
+            <option value="Blood Bank - Base Hospital Padaviya" />
+            <option value="Blood Bank - Base Hospital Mahaoya" />
+            <option value="Blood Bank - Base Hospital Dehiattakandiya" />
+            <option value="Blood Bank - Teaching Hospital Kurunegala" />
+            <option value="Blood Bank - National Hospital for Respiratory Diseases (Welisara)" />
+            <option value="Blood Bank - Lady Ridgeway Hospital for Children (LRH)" />
+            <option value="Blood Bank - Castle Street Hospital for Women (CSHW)" />
+            <option value="Blood Bank - Sri Jayawardhanepura General Hospital" />
+            <option value="Blood Bank - National Institute for Nephrology, Dialises & Transplantation (Maligawatta)" />
+            <option value="Blood Bank - De Soysa Hospital for Women (DMH)" />
+            <option value="South Regional Blood Centre - Kamburugamuwa" />
+            <option value="Blood Bank - Base Hospital Medawachchiya" />
+            <option value="Blood Bank - University Hospital KDU" />
+            <option value="Blood Bank - Army Hospital" />
+            <option value="Blood Bank - DGH Horana" />
+            <option value="Blood Bank - Base Hospital Eheliyagoda" />
+          </datalist>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -213,7 +341,7 @@ function HospStep3({ onNext, onBack }: { onNext: (data: Record<string, string>) 
         <label className="text-sm font-medium text-gray-700 block mb-1">City/District *</label>
         <select value={city} onChange={e => setCity(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
           <option value="">Select city</option>
-          {['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Matara', 'Kurunegala', 'Ratnapura', 'Anuradhapura', 'Batticaloa'].map(c => <option key={c}>{c}</option>)}
+          {DISTRICTS.map(c => <option key={c}>{c}</option>)}
         </select>
       </div>
       <div className="flex gap-3">
@@ -269,11 +397,11 @@ function HospStep4({
       </div>
       <label className="flex items-start gap-2 cursor-pointer">
         <input type="checkbox" checked={agreedTerms} onChange={e => setAgreedTerms(e.target.checked)} className="mt-0.5 accent-red-600" />
-        <span className="text-sm text-gray-600">I agree to the <span className="text-blue-600">Terms of Service</span> and understand my responsibilities as a healthcare provider.</span>
+        <span className="text-sm text-gray-600">I agree to the <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms of Service</Link> and understand my responsibilities as a healthcare provider.</span>
       </label>
       <label className="flex items-start gap-2 cursor-pointer">
         <input type="checkbox" checked={agreedPrivacy} onChange={e => setAgreedPrivacy(e.target.checked)} className="mt-0.5 accent-red-600" />
-        <span className="text-sm text-gray-600">I have read and agree to the <span className="text-blue-600">Privacy Policy</span> and consent to data processing.</span>
+        <span className="text-sm text-gray-600">I have read and agree to the <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Privacy Policy</Link> and consent to data processing.</span>
       </label>
       <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex gap-2">
         <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
